@@ -31,8 +31,6 @@ import EstoqueAdd from "../components/Estoque/EstoqueAdd";
 import EstoqueEdit from "../components/Estoque/EstoqueEdit";
 import EstoqueSummary from "../components/Estoque/EstoqueSummary";
 
-import DummyService from "../services/DummyService";
-
 export default {
   props: ["user"],
   components: {
@@ -48,22 +46,26 @@ export default {
         show: false,
         text: "",
       },
-      products: [],
-      filteredProducts: [],
+      products: this.user.products || [],
+      filteredProducts: this.user.products || [],
       productToEdit: null,
     };
   },
   created() {
-    this.products = DummyService[this.user].products;
-    this.filteredProducts = this.products;
+    console.log("User prop:", this.user);
+    if (this.user && this.user.products) {
+      console.log("User found with products");
+      this.products = this.user.products;
+      this.filteredProducts = this.products;
+      console.log("Products:", this.products);
+    } else {
+      console.error("User not found or user has no products");
+    }
   },
   methods: {
     showSnackbar(mensagem, callback = () => {}) {
-      // Atualiza os dados do snackbar
       this.snackbar.show = true;
       this.snackbar.text = mensagem;
-
-      // Chama a função de retorno após 2 segundos
       setTimeout(() => {
         this.snackbar.show = false;
         callback();
@@ -79,7 +81,9 @@ export default {
       const index = this.products.findIndex(
         (product) => product.id === editedProduct.id
       );
-      this.products[index] = editedProduct;
+      if (index !== -1) {
+        this.products.splice(index, 1, editedProduct);
+      }
       this.productToEdit = null;
       this.showSnackbar("Produto editado com sucesso.");
     },
@@ -93,6 +97,7 @@ export default {
   },
 };
 </script>
+
 
 
 <style scoped>

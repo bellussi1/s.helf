@@ -1,11 +1,11 @@
 <template>
   <div class="dashboard">
-    <div class="charts">
+    <div class="charts" v-if="isDataReady">
       <h1 class="title">Estatísticas</h1>
       <DashboardYear :years="years" @year-selected="updateSelectedYear" />
 
       <DashboardChart
-        v-if="billingData"
+        v-if="billingData.length"
         title="Faturamento"
         :data="billingData"
         :bestMonth="bestBillingMonth"
@@ -14,7 +14,7 @@
         @click="selectChart('billing')"
       />
       <DashboardChart
-        v-if="salesData"
+        v-if="salesData.length"
         title="Vendas"
         :data="salesData"
         :bestMonth="bestSalesMonth"
@@ -23,7 +23,7 @@
         @click="selectChart('sales')"
       />
       <DashboardChart
-        v-if="averageTicketData"
+        v-if="averageTicketData.length"
         title="Ticket Médio"
         :data="averageTicketData"
         :bestMonth="bestAverageTicketMonth"
@@ -32,7 +32,7 @@
         @click="selectChart('averageTicket')"
       />
     </div>
-    <div class="selected-chart">
+    <div class="selected-chart" v-if="isDataReady">
       <DashboardSelectedChart
         v-if="selectedChart === 'billing'"
         title="Faturamento"
@@ -61,7 +61,6 @@ import DashboardYear from "../components/Dashboard/DashboardYear";
 import DashboardChart from "../components/Dashboard/DashboardChart";
 import DashboardTable from "../components/Dashboard/DashboardTable";
 import DashboardSelectedChart from "../components/Dashboard/DashboardSelectedChart";
-import DummyService from "../services/DummyService";
 
 export default {
   props: ["user"],
@@ -82,6 +81,7 @@ export default {
       bestSalesMonth: null,
       bestAverageTicketMonth: null,
       selectedChart: "billing",
+      isDataReady: false, // Nova propriedade para controlar a renderização
     };
   },
   created() {
@@ -105,8 +105,11 @@ export default {
       this.bestBillingMonth = this.getBestMonth(this.billingData);
       this.bestSalesMonth = this.getBestMonth(this.salesData);
       this.bestAverageTicketMonth = this.getBestMonth(this.averageTicketData);
+
+      this.isDataReady = true; // Dados prontos para renderizar os gráficos
     },
     getBestMonth(data) {
+      if (data.length === 0) return null;
       let bestMonth = data[0];
       for (let i = 1; i < data.length; i++) {
         if (data[i].value > bestMonth.value) {
@@ -117,7 +120,7 @@ export default {
     },
     getYears() {
       const years = [];
-      DummyService[this.user].sales.forEach((sale) => {
+      this.user.sales.forEach((sale) => {
         const year = new Date(sale.date).getFullYear();
         if (!years.includes(year)) {
           years.push(year);
@@ -126,12 +129,12 @@ export default {
       return years.sort();
     },
     getBillingData() {
-      const sales = DummyService[this.user].sales.filter(
+      const sales = this.user.sales.filter(
         (sale) => new Date(sale.date).getFullYear() === this.selectedYear
       );
       const groupedSales = sales.reduce((acc, sale) => {
         const month = new Date(sale.date).getMonth();
-        const product = DummyService[this.user].products.find(
+        const product = this.user.products.find(
           (product) => product.id === sale.productId
         );
         if (!acc[month]) {
@@ -143,11 +146,10 @@ export default {
         acc[month].value += product.price * sale.quantity;
         return acc;
       }, {});
-      const billingData = Object.values(groupedSales);
-      return billingData;
+      return Object.values(groupedSales);
     },
     getSalesData() {
-      const sales = DummyService[this.user].sales.filter(
+      const sales = this.user.sales.filter(
         (sale) => new Date(sale.date).getFullYear() === this.selectedYear
       );
       const groupedSales = sales.reduce((acc, sale) => {
@@ -161,17 +163,15 @@ export default {
         acc[month].value += sale.quantity;
         return acc;
       }, {});
-      const salesData = Object.values(groupedSales);
-      return salesData;
+      return Object.values(groupedSales);
     },
     getAverageTicketData() {
       const billingData = this.getBillingData();
       const salesData = this.getSalesData();
-      const averageTicketData = billingData.map((item, index) => ({
+      return billingData.map((item, index) => ({
         label: item.label,
         value: salesData[index] ? item.value / salesData[index].value : 0,
       }));
-      return averageTicketData;
     },
   },
   computed: {
@@ -179,7 +179,6 @@ export default {
       const billingData = this.getBillingData();
       const salesData = this.getSalesData();
       const averageTicketData = this.getAverageTicketData();
-
       return billingData.map((item, index) => ({
         label: item.label,
         billing: item.value,
@@ -192,6 +191,7 @@ export default {
   },
 };
 </script>
+
 
 <style scoped>
 .dashboard {

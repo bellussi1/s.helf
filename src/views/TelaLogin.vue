@@ -37,15 +37,24 @@
         id="password"
       />
     </div>
+    <a @click.prevent="esqueciSenha" class="forget__password"
+      >Esqueceu sua senha?</a
+    >
     <div class="field">
       <button class="button">Login</button>
     </div>
+    <p>
+      Ainda não tem uma conta?
+      <a @click.prevent="fazerCadastro" class="forget__password"
+        >Cadastre-se!</a
+      >
+    </p>
   </form>
 </template>
-  
-  
-  <script>
+<script>
 import DummyAuth from "../services/DummyAuth";
+import users from "../services/DummyService";
+
 export default {
   data() {
     return {
@@ -54,23 +63,33 @@ export default {
     };
   },
   methods: {
-    doLogin() {
+    async doLogin() {
       if (DummyAuth[this.username] === this.password) {
-        this.$emit("do-login", this.username); // passa o nome do usuário como um argumento
-        this.$router.push("/dashboard");
+        const user = users[this.username]; // Obter todas as informações do usuário
+        this.$emit("do-login", user); // Emitir evento de login com todas as informações do usuário
+        this.$router.push("/dashboard"); // Redirecionar para a rota "/dashboard"
       } else {
         alert("Usuário ou senha incorretos!");
       }
     },
+    esqueciSenha() {
+      this.$emit("show-reset-password"); // Emitir evento para mostrar a tela de recuperação de senha
+    },
+
+    fazerCadastro() {
+      this.$emit("show-register"); // Emitir evento para mostrar a tela de cadastro
+    },
   },
 };
 </script>
+
+
   
   <style scoped>
 .card {
   width: 15rem;
   height: 22rem;
-  background: #f4f6fb;
+  background: #fff;
   border: 1px solid white;
   box-shadow: 10px 10px 64px 0px rgba(180, 180, 207, 0.75);
   -webkit-box-shadow: 10px 10px 64px 0px rgba(186, 186, 202, 0.75);
@@ -140,6 +159,16 @@ button {
 button:hover {
   background-color: var(--verde-escuro);
   cursor: pointer;
+}
+
+.forget__password {
+  cursor: pointer;
+  color: var(--verde-agua);
+  font-size: 0.6rem;
+}
+
+p {
+  font-size: 0.6rem;
 }
 </style>
   

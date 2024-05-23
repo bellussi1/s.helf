@@ -13,8 +13,7 @@ import './assets/colors.css'
 
 const app = createApp(App)
 
-// app.use(router)
-app.use(fontawesome)
 app.use(router)
+app.use(fontawesome)
 app.use(VueApexCharts)
 app.mount('#app')
